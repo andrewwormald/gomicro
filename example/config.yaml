@@ -1,0 +1,16 @@
+---
+module: "andrewwormald"
+service:
+  name: "apollo"
+  logicals:
+    - name: "users"
+      api:
+        fileName: "api.go"
+        interface: "API"
+        implementations:
+          local: true
+          http: true
+    - name: "bookings"
+      dependencies:
+          - "apollo.users"
+
