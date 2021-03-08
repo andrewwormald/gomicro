@@ -11,6 +11,17 @@ service:
           local: true
           http: true
     - name: "bookings"
+      api:
+        fileName: "api.go"
+        interface: "Client"
+        implementations:
+          local: true
+          http: true
       dependencies:
-          - "apollo.users"
+        - name: "Users"
+          path: "andrewwormald/apollo/users"
+          type: "users.API"
+        - name: "MainDB"
+          path: "database/sql"
+          type: "*sql.DB"
 
