@@ -73,6 +73,10 @@ type Struct struct {
 }
 
 func (s *Struct) AddTo(file *os.File) error {
+	if len(s.Fields) == 0 {
+		return template.Must(template.New("").Parse(emptyStructTemplate)).Execute(file, s)
+	}
+
 	return template.Must(template.New("").Parse(structTemplate)).Execute(file, s)
 }
 
@@ -84,6 +88,10 @@ type {{.Name}} struct {
 }
 `
 
+var emptyStructTemplate = `
+type {{.Name}} struct {}
+`
+
 // Interface is the configuration of a custom interface type to be made. The template expects 'Interface'
 type Interface struct {
 	Name      string
@@ -91,6 +99,10 @@ type Interface struct {
 }
 
 func (i *Interface) AddTo(file *os.File) error {
+	if len(i.Functions) == 0 {
+		return template.Must(template.New("").Parse(emptyInterfaceTemplate)).Execute(file, i)
+	}
+
 	return template.Must(template.New("").Parse(interfaceTemplate)).Execute(file, i)
 }
 
@@ -100,6 +112,10 @@ type {{.Name}} interface {
 	{{ $value }}
 {{- end }}
 }
+`
+
+var emptyInterfaceTemplate = `
+type {{.Name}} interface {}
 `
 
 type Function struct {
@@ -157,6 +173,24 @@ func (s *Statement) AddTo(file *os.File) error {
 	return template.Must(template.New("").Parse(statementTemplate)).Execute(file, s)
 }
 
-var statementTemplate = `
-{{.Value}}
+var statementTemplate = `{{.Value}}
+`
+
+type Comment struct {
+	Value string
+}
+
+func (c *Comment) AddTo(file *os.File) error {
+	return template.Must(template.New("").Parse(commentTemplate)).Execute(file, c)
+}
+
+var commentTemplate = `// {{.Value}}`
+
+type Linebreak struct {}
+
+func (s *Linebreak) AddTo(file *os.File) error {
+	return template.Must(template.New("").Parse(linebreakTemplate)).Execute(file, s)
+}
+
+var linebreakTemplate = `
 `

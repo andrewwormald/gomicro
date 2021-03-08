@@ -1,12 +1,16 @@
 package main
 
 import (
-	"errors"
+	"context"
 	"flag"
-	"gomicro/config"
-	"gomicro/templates"
+	"github.com/luno/jettison/log"
 	"io/ioutil"
 	"os"
+
+	"github.com/luno/jettison/errors"
+
+	"gomicro/config"
+	"gomicro/templates"
 )
 
 var configPath = flag.String("config", "../example/config.yaml", "The location of the GoMicro config yaml file")
@@ -44,30 +48,49 @@ var outputPath = flag.String("output", "../myRepo", "The directory to generate t
 func main() {
 	flag.Parse()
 
+	ctx := context.Background()
+
 	// get the current location that its being executed from
 	wd, err := os.Getwd()
 	if err != nil {
+		log.Error(ctx, err)
 		panic(err)
 	}
 
 	// change directory to its being executed from
 	err = os.Chdir(wd)
 	if err != nil {
+		log.Error(ctx, err)
 		panic(err)
 	}
 
 	c, err := config.ParseConfig(*configPath)
 	if err != nil {
+		log.Error(ctx, err)
 		panic(err)
 	}
 
 	err = CreateFrameworkWithFillInStrategy(*outputPath, c)
 	if err != nil {
+		log.Error(ctx, err)
 		panic(err)
 	}
 
 	err = WireUpHttpClientServer(*outputPath, c)
 	if err != nil {
+		log.Error(ctx, err)
+		panic(err)
+	}
+
+	err = WireUpDependencies(*outputPath, c)
+	if err != nil {
+		log.Error(ctx, err)
+		panic(err)
+	}
+
+	err = CreateLogicalRuntimeSetup(*outputPath, c)
+	if err != nil {
+		log.Error(ctx, err)
 		panic(err)
 	}
 }
@@ -82,13 +105,13 @@ func CreateFileIfNotExists(path string, fc templates.FileConfig) error {
 
 		f, err := os.OpenFile(path, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "")
 		}
 
 		for _, adder := range fc {
 			err := adder.AddTo(f)
 			if err != nil {
-				return err
+				return errors.Wrap(err, "")
 			}
 		}
 	}

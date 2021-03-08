@@ -11,9 +11,15 @@ type Service struct {
 }
 
 type Logical struct {
-	Name         string   `yaml:"name"`
-	API          API      `yaml:"api"`
-	Dependencies []string `yaml:"dependencies"`
+	Name         string `yaml:"name"`
+	API          API    `yaml:"api"`
+	Dependencies []Dep  `yaml:"dependencies"`
+}
+
+type Dep struct {
+	Name string `yaml:"name"`
+	Path string `yaml:"path"`
+	Type string `yaml:"type"`
 }
 
 type API struct {
