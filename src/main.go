@@ -3,14 +3,13 @@ package main
 import (
 	"context"
 	"flag"
-	"github.com/luno/jettison/log"
-	"io/ioutil"
+	"github.com/luno/jettison/errors"
 	"os"
 
-	"github.com/luno/jettison/errors"
+	"github.com/luno/jettison/log"
 
 	"gomicro/config"
-	"gomicro/templates"
+	"gomicro/wireup"
 )
 
 var configPath = flag.String("config", "../example/config.yaml", "The location of the GoMicro config yaml file")
@@ -70,73 +69,33 @@ func main() {
 		panic(err)
 	}
 
-	err = CreateFrameworkWithFillInStrategy(*outputPath, c)
+	err = os.Chdir(*outputPath)
 	if err != nil {
 		log.Error(ctx, err)
 		panic(err)
 	}
 
-	err = WireUpHttpClientServer(*outputPath, c)
+	err = wireup.FrameworkWithFillInStrategy(c)
 	if err != nil {
 		log.Error(ctx, err)
 		panic(err)
 	}
 
-	err = WireUpDependencies(*outputPath, c)
+	err = wireup.HttpClientServer(c)
 	if err != nil {
 		log.Error(ctx, err)
 		panic(err)
 	}
 
-	err = CreateLogicalRuntimeSetup(*outputPath, c)
+	err = wireup.Dependencies(c)
 	if err != nil {
 		log.Error(ctx, err)
 		panic(err)
 	}
-}
 
-func CreateFileIfNotExists(path string, fc templates.FileConfig) error {
-	_, err := os.Stat(path)
-	if os.IsNotExist(err) {
-		err = ioutil.WriteFile(path, []byte{}, os.ModePerm)
-		if err != nil {
-			return errors.New("unable to create file")
-		}
-
-		f, err := os.OpenFile(path, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
-		if err != nil {
-			return errors.Wrap(err, "")
-		}
-
-		for _, adder := range fc {
-			err := adder.AddTo(f)
-			if err != nil {
-				return errors.Wrap(err, "")
-			}
-		}
+	err = wireup.LogicalRuntimeSetup(c)
+	if err != nil {
+		log.Error(ctx, err)
+		panic(err)
 	}
-
-	return nil
-}
-
-func FileExists(path string) (bool, error) {
-	_, err := os.Stat(path)
-	if os.IsNotExist(err) {
-		return false, nil
-	} else if err != nil {
-		return false, err
-	}
-
-	return true, nil
-}
-
-func CreateDirIfNotExists(path string) error {
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		err := os.Mkdir(path, os.ModePerm)
-		if err != nil {
-			return errors.New("unable to create service directory")
-		}
-	}
-
-	return nil
 }
